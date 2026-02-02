@@ -7,11 +7,7 @@ from project import (
     solve_heat_equation, generate_training_data
     
 )
-
-
-
-
-
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -40,10 +36,6 @@ def main():
         save_path="output/sensor_animation.gif",
         fps=10,
     )
-
-
-
-
 
 
 
