@@ -10,10 +10,6 @@ from project import (
 
 
 
-
-
-
-
 def main():
     cfg = load_config("config.yaml")
 
@@ -40,10 +36,6 @@ def main():
         save_path="output/sensor_animation.gif",
         fps=10,
     )
-
-
-
-
 
 
 

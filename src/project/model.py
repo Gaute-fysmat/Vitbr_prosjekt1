@@ -83,6 +83,10 @@ def forward(
     #######################################################################
     # Oppgave 4.1: Start
     #######################################################################
+    x_norm = (x - cfg.x_min) / (cfg.x_max - cfg.x_min)
+    y_norm = (y - cfg.y_min) / (cfg.y_max - cfg.y_min)
+    t_norm = (t - cfg.t_min) / (cfg.t_max - cfg.t_min)
+
 
 
 
