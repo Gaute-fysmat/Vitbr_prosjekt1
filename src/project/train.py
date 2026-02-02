@@ -34,6 +34,15 @@ def train_nn(
     #######################################################################
     # Oppgave 4.3: Start
     #######################################################################
+    for i in range(cfg.num_epochs):
+        ic_epoch, key = sample_ic(key, cfg)
+        #  cfg.lambda_data, cfg.lambda_ic
+        objekt_funk = (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
+                       + cfg.lambda_ic * ic_loss(nn_params, , cfg))
+
+
+
+
 
     # Update the nn_params and losses dictionary
 
