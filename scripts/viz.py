@@ -109,3 +109,56 @@ def create_animation(
     anim.save(save_path, writer=PillowWriter(fps=fps))
     plt.close()
     print(f"Saved: {save_path}")
+
+
+def create_sensor_animation(
+    sensor_data,
+    title="Sensor measurements",
+    cmap="inferno",
+    save_path="output/sensor_animation.gif",
+    fps=10,
+):
+
+    # sensor_data: [x, y, t, T_noisy]
+    xs = sensor_data[:,0]
+    ys = sensor_data[:,1]
+    ts = sensor_data[:,2]
+    Ts = sensor_data[:,3]
+
+    # Finn tidspunkter i rekkefølge og indeks per måling
+    unique_t, inv = np.unique(ts, return_inverse=True)
+
+    # Opprett mappe
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    # Setup figur
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    # Fast fargeskala gjennom hele animasjonen
+    vmin, vmax = Ts.min(), Ts.max()
+
+    # Initielt plott (frame 0):
+    mask0 = inv == 0
+    sc = ax.scatter(xs[mask0], ys[mask0], c=Ts[mask0],
+                    cmap=cmap, s=80, vmin=vmin, vmax=vmax)
+
+    plt.colorbar(sc, label="Temperature")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title(f"{title}, t = {unique_t[0]:.2f} s")
+    ax.set_aspect("equal")
+
+    # --- update-funksjon til FuncAnimation
+    def update(frame):
+        mask = inv == frame
+        sc.set_offsets(np.column_stack((xs[mask], ys[mask])))
+        sc.set_array(Ts[mask])
+        ax.set_title(f"{title}, t = {unique_t[frame]:.2f} s")
+        return [sc]
+
+    print("\nCreating sensor animation...")
+    anim = FuncAnimation(fig, update, frames=len(unique_t), interval=1000/fps, blit=True)
+
+    anim.save(save_path, writer=PillowWriter(fps=fps))
+    plt.close(fig)
+    print(f"Saved: {save_path}")

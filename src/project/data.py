@@ -26,12 +26,16 @@ def generate_training_data(
     #######################################################################
 
     # Placeholder initialization — replace this with your implementation
-    x, y, t, T_fdm, sensor_data = None, None, None, None, None
+    x, y, t, T_fdm = solve_heat_equation(cfg)
+    
+    sensor_data = _generate_sensor_data(x,y,t, T_fdm, cfg)
+    
 
     #######################################################################
     # Oppgave 3.3: Slutt
     #######################################################################
     return x, y, t, T_fdm, jnp.asarray(sensor_data)
+
 
 
 def _generate_sensor_data(
@@ -54,3 +58,5 @@ def _generate_sensor_data(
                 sensor_data.append([x[i], y[j], time, temp_noisy])
 
     return np.array(sensor_data)
+
+

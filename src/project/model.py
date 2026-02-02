@@ -84,6 +84,8 @@ def forward(
     # Oppgave 4.1: Start
     #######################################################################
 
+
+
     # Placeholder initialization — replace this with your implementation
     out = None
 

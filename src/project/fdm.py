@@ -5,9 +5,7 @@ import numpy as np
 from .config import Config
 
 
-def solve_heat_equation(
-    cfg: Config,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def solve_heat_equation(cfg: Config,) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Solve the 2D heat equation using implicit Euler.
 
     Args:
@@ -32,9 +30,26 @@ def solve_heat_equation(
     #######################################################################
     # Oppgave 3.2: Start
     #######################################################################
+    T = np.zeros((cfg.nt, cfg.nx, cfg.ny)) 
+
+    T0 = np.zeros((cfg.nx, cfg.ny), dtype=float) + cfg.T_outside
+
+    A = _build_matrix(cfg, dx, dy, dt)
+
+    T_curr = T0
+    for n in range(1, cfg.nt):
+        t_neste = t[n]
+        b = _build_rhs(cfg, T_curr, X, Y, dx, dy, dt, t_neste)
+        
+        u_next_flat = np.linalg.solve(A, b)  # tett løsning; for større grid: bruk sparse
+        T_neste = u_next_flat.reshape(cfg.nx, cfg.ny)  # tilbake til 2D
+        
+        T[n] = T_neste
+        T_curr = T_neste
+
 
     # Placeholder initialization — replace this with your implementation
-    T = np.zeros((cfg.nt, cfg.nx, cfg.ny))
+    #T = np.zeros((cfg.nt, cfg.nx, cfg.ny))
 
     #######################################################################
     # Oppgave 3.2: Slutt
@@ -50,11 +65,12 @@ def _build_matrix(cfg: Config, dx: float, dy: float, dt: float) -> np.ndarray:
 
     rx = cfg.alpha * dt / dx**2
     ry = cfg.alpha * dt / dy**2
-
+    
     def idx(i, j):
         return i * cfg.ny + j
 
     I, J = np.meshgrid(np.arange(cfg.nx), np.arange(cfg.ny), indexing="ij")
+
 
     # Boundary masks
     left = I == 0
