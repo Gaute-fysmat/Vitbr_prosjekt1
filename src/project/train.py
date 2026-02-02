@@ -37,8 +37,12 @@ def train_nn(
     for i in range(cfg.num_epochs):
         ic_epoch, key = sample_ic(key, cfg)
         #  cfg.lambda_data, cfg.lambda_ic
-        objekt_funk = (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
-                       + cfg.lambda_ic * ic_loss(nn_params, , cfg))
+        objekt_fn = (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
+                       + cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg))
+
+        
+        #grad = jax.value_and_grad(objekt_fn, has_aux=True)
+        valgrad = jax.value_and_grad(objekt_fn, has_aux=True)
 
 
 
