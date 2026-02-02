@@ -42,18 +42,14 @@ def train_nn(
         return total, (l_data, l_ic)
 
     
-
     for _ in range(cfg.num_epochs):
         ic_epoch, key = sample_ic(key, cfg)
         #objekt_ting= lambda nn_params: (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
-        (total, (l_data, l_ic)), grads = jax.value_and_grad(
-            objective_fn, has_aux=True
-        )(nn_params)
+        (total, (l_data, l_ic)), grads = jax.value_and_grad(objective_fn, has_aux=True)(nn_params)
 
         nn_params, adam_state = adam_step(
             nn_params, grads, adam_state, lr=cfg.learning_rate
         )
-
         losses["total"].append(total)
         losses["data"].append(l_data)
         losses["ic"].append(l_ic)
