@@ -87,11 +87,20 @@ def forward(
     y_norm = (y - cfg.y_min) / (cfg.y_max - cfg.y_min)
     t_norm = (t - cfg.t_min) / (cfg.t_max - cfg.t_min)
 
+    a = jnp.stack([x_norm, y_norm, t_norm], axis=-1)
 
+    for i in range(len(nn_params)):
+        
+        w_i, b_i = nn_params[i] # Bruker lag i
+        
+        a = jnp.tanh(a @ w_i + b_i) # Merk a @ w_i i stedet for w_i @ a
+
+
+    out = a.squeeze() 
 
 
     # Placeholder initialization — replace this with your implementation
-    out = None
+    #out = None
 
     #######################################################################
     # Oppgave 4.1: Slutt
