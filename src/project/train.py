@@ -33,19 +33,30 @@ def train_nn(
 
     #######################################################################
     # Oppgave 4.3: Start
-    #######################################################################
     for i in range(cfg.num_epochs):
         ic_epoch, key = sample_ic(key, cfg)
+        #objekt_ting= lambda nn_params: (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
+                        #+ cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg))
+        
         #  cfg.lambda_data, cfg.lambda_ic
-        objekt_fn = (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
-                       + cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg))
+        val , grads = jax.value_and_grad(lambda nn_params: (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
+                        + cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg)), has_aux=True)(nn_params)
+        nn_params, adam_state = adam_step(nn_params, grads, adam_state, lr=cfg.learning_rate)
+
+    #######################################################################
+
+    return nn_params, {k: jnp.array(v) for k, v in losses.items()}
+"""
+    def objekt_fn(nn_params):
+        objekt_ting = (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
+                    + cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg))
+        return objekt_ting
 
         
         #grad = jax.value_and_grad(objekt_fn, has_aux=True)
-        valgrad = jax.value_and_grad(objekt_fn, has_aux=True)
+    valgrad = jax.value_and_grad(objekt_ting, has_aux=True)(nn_params)
 
-
-
+"""
 
 
     # Update the nn_params and losses dictionary
@@ -54,7 +65,7 @@ def train_nn(
     # Oppgave 4.3: Slutt
     #######################################################################
 
-    return nn_params, {k: jnp.array(v) for k, v in losses.items()}
+
 
 
 def train_pinn(sensor_data: jnp.ndarray, cfg: Config) -> tuple[dict, dict]:
