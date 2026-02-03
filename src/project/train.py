@@ -10,6 +10,8 @@ from .loss import bc_loss, data_loss, ic_loss, physics_loss
 from .model import init_nn_params, init_pinn_params
 from .optim import adam_step, init_adam
 from .sampling import sample_bc, sample_ic, sample_interior
+from tqdm import tqdm
+
 
 
 def train_nn(
@@ -40,7 +42,9 @@ def train_nn(
             total = cfg.lambda_data * l_data + cfg.lambda_ic * l_ic
             return total, (l_data, l_ic)
 
-    for i in range(cfg.num_epochs):
+    
+    # Din kode her
+    for _ in tqdm(range(cfg.num_epochs), desc="Training NN"):
         ic_epoch, key = sample_ic(key, cfg)
         #objekt_ting= lambda nn_params: (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
                         #+ cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg))
