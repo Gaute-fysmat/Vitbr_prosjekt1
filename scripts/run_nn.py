@@ -20,6 +20,17 @@ def main():
     #######################################################################
     # Oppgave 4.4: Start
     #######################################################################
+    x, y, t, T_fdm, sensor_data = generate_training_data(cfg)
+
+    nn_params, a, = train_nn(sensor_data, cfg)
+
+    T_nn = predict_grid(nn_params,x, y, t, cfg)
+
+    
+    create_animation(
+    x, y, t, T_nn, title="FDM", save_path="output/fdm/NN_animation.gif"
+    )
+
 
     #######################################################################
     # Oppgave 4.4: Slutt
