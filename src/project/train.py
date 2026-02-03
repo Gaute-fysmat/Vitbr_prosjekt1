@@ -41,7 +41,7 @@ def train_nn(
             l_ic = ic_loss(nn_params, ic_epoch, cfg)
             total = cfg.lambda_data * l_data + cfg.lambda_ic * l_ic
             return total, (l_data, l_ic)
-
+    objekt_fn = jax.jit(objekt_fn)
     
     # Din kode her
     for _ in tqdm(range(cfg.num_epochs), desc="Training NN"):
