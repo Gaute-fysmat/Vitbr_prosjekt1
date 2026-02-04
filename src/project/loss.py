@@ -90,23 +90,78 @@ def physics_loss(pinn_params, interior_points, cfg: Config):
         Mean squared PDE residual
     """
     x, y, t = interior_points[:, 0], interior_points[:, 1], interior_points[:, 2]
-
+    
     #######################################################################
     # Oppgave 5.2: Start
     #######################################################################)
 
+    def _pde_residual_scalar(pinn_params, x, y, t, cfg: Config):
+
+        """Compute Robin BC residual: -k * grad(T) . n - h * (T - T_out) = 0.
+
+        Args:
+            pinn_params: Full pinn_params dict with 'nn', 'log_k', 'log_h' keys
+            x, y, t: Point on boundary (scalars)
+            nx, ny: Outward normal components (scalars)
+            cfg: Configuration
+
+        Returns:
+            BC residual (scalar)
+        """
+
+        def T_fn(x, y, t):
+            return forward(pinn_params["nn"], x, y, t, cfg)
+
+        # Compute spatial gradients using automatic differentiation
+        T_x = grad(T_fn, 0)(x, y, t)
+        T_y = grad(T_fn, 1)(x, y, t)
+        T_t = grad(T_fn, 3)( x, y, t) 
+        T_xx = grad(grad(T_fn, 1), 1)(x, y, t)
+        T_yy = grad(grad(T_fn, 2), 2)(x, y, t)
+
+        # Temperature at boundary point
+        T = T_fn(x, y, t)
+
+        # Robin BC: -k * (grad T . n) = h * (T - T_out)
+        #grad_T_dot_n = T_x * nx + T_y * ny
+        #k = jnp.exp(pinn_params["log_k"])
+        #h = jnp.exp(pinn_params["log_h"])
+        q = jnp.exp(pinn_params["log_power"] *cfg.is_source(x, y))
+        residual = T_t - jnp.exp(pinn_params["log_alpha"])*(T_xx+T_yy) - q 
+
+        return residual
+
+    residuals = vmap(
+        lambda xi, yi, ti: _pde_residual_scalar(
+            pinn_params, xi, yi, ti, cfg))(x, y, t)
+
+    physics_loss_val = jnp.mean(residuals**2)
+
+    return physics_loss_val
+
+"""
     N_pred = forward(pinn_params, x ,y ,t ,cfg )
 
+    iduals = vmap(
+        lambda xi, yi, ti: _pde_residual_scalar(pinn_params, xi, yi, ti, cfg)
+         )(x, y, t)
 
 
-    f_t = grad(forward, 3)(pinn_params["nn"], x, y, t, cfg ) 
-    f_xx = grad(grad(forward, 1), 1)(pinn_params["nn"], x, y, t, cfg )
-    f_yy = grad(grad(forward, 2), 2)(pinn_params["nn"], x, y, t, cfg )
-    f_tt = grad(grad(forward, 3), 3)(pinn_params["nn"], x, y, t, cfg )
+    def _pde_residual_scalar(pinn_params, xi, yi, ti, cfg);
+        f_t = grad(forward, 3)(pinn_params["nn"], x, y, t, cfg ) 
+        f_xx = grad(grad(forward, 1), 1)(pinn_params["nn"], x, y, t, cfg )
+        f_yy = grad(grad(forward, 2), 2)(pinn_params["nn"], x, y, t, cfg )
 
-    physics_loss_val = (jnp.mean((f_t- jnp.exp(pinn_params["log_alpha"])*(f_xx + f_yy + f_tt) 
-                                 - pinn_params["log_power"] *cfg.is_source(x, y)  ) ) )
 
+    #f_tt = grad(grad(forward, 3), 3)(pinn_params["nn"], x, y, t, cfg )
+
+    physics_loss_val = (jnp.mean((f_t- jnp.exp(pinn_params["log_alpha"])*(f_xx + f_yy) 
+                                 - jnp.exp(pinn_params["log_power"] *cfg.is_source(x, y)  )) ) )
+    
+    als = vmap(
+        lambda xi, yi, ti: _pde_residual_scalar(pinn_params, xi, yi, ti, cfg)
+        )(x, y, t)
+"""
 
     # Placeholder initialization — replace this with your implementation
     #physics_loss_val = None
@@ -115,7 +170,6 @@ def physics_loss(pinn_params, interior_points, cfg: Config):
     # Oppgave 5.2: Slutt
     #######################################################################
 
-    return physics_loss_val
 
 
 def bc_loss(pinn_params: dict, bc_points, cfg: Config) -> jnp.ndarray:
@@ -131,6 +185,7 @@ def bc_loss(pinn_params: dict, bc_points, cfg: Config) -> jnp.ndarray:
     """
     x, y, t = bc_points[:, 0], bc_points[:, 1], bc_points[:, 2]
     nx, ny = bc_points[:, 3], bc_points[:, 4]
+    
 
     def _bc_residual_scalar(pinn_params, x, y, t, nx, ny, cfg: Config):
         """Compute Robin BC residual: -k * grad(T) . n - h * (T - T_out) = 0.
