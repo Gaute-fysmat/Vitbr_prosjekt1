@@ -51,6 +51,7 @@ def train_nn(
         
         #  cfg.lambda_data, cfg.lambda_ic
         (total, (l_data, l_ic)), grads = jax.value_and_grad(objekt_fn, has_aux=True)(nn_params)
+        
         nn_params, adam_state = adam_step(nn_params, grads, adam_state, lr=cfg.learning_rate)
 
         losses["total"].append(total)

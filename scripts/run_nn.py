@@ -26,9 +26,9 @@ def main():
 
     T_nn = predict_grid(nn_params,x, y, t, cfg)
 
-    
+
     create_animation(
-    x, y, t, T_nn, title="FDM", save_path="output/fdm/NN_animation.gif"
+    x, y, t, T_nn, title="FDM", save_path="output/fdm/NN_animation_32n_5000epo.gif"
     )
 
 
