@@ -51,7 +51,7 @@ def train_nn(
         
         #  cfg.lambda_data, cfg.lambda_ic
         (total, (l_data, l_ic)), grads = jax.value_and_grad(objekt_fn, has_aux=True)(nn_params)
-        
+
         nn_params, adam_state = adam_step(nn_params, grads, adam_state, lr=cfg.learning_rate)
 
         losses["total"].append(total)
@@ -61,31 +61,6 @@ def train_nn(
     #######################################################################
     return nn_params, {k: jnp.array(v) for k, v in losses.items()}
 
-"""
-  for i in range(cfg.num_epochs):
-        ic_epoch, key = sample_ic(key, cfg)
-        #objekt_ting= lambda nn_params: (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
-                        #+ cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg))
-        
-        #  cfg.lambda_data, cfg.lambda_ic
-        val , grads = jax.value_and_grad(lambda nn_params: (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
-                        + cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg)), has_aux=True)(nn_params)
-        
-        
-        nn_params, adam_state = adam_step(nn_params, grads, adam_state, lr=cfg.learning_rate)
-"""
-"""
-    def objekt_fn(nn_params):
-        objekt_ting = (cfg.lambda_data * data_loss(nn_params, sensor_data, cfg)
-                    + cfg.lambda_ic * ic_loss(nn_params, ic_epoch, cfg))
-        return objekt_ting
-
-        
-        #grad = jax.value_and_grad(objekt_fn, has_aux=True)
-    valgrad = jax.value_and_grad(objekt_ting, has_aux=True)(nn_params)
-
-"""
-
 
     # Update the nn_params and losses dictionary
 
@@ -94,15 +69,12 @@ def train_nn(
     #######################################################################
 
 
-
-
 def train_pinn(sensor_data: jnp.ndarray, cfg: Config) -> tuple[dict, dict]:
     """Train a physics-informed neural network.
 
     Args:
         sensor_data: Sensor measurements [x, y, t, T]
         cfg: Configuration
-
     Returns:
         pinn_params: Trained parameters (nn weights + alpha)
         losses: Dictionary of loss histories
@@ -116,6 +88,31 @@ def train_pinn(sensor_data: jnp.ndarray, cfg: Config) -> tuple[dict, dict]:
     #######################################################################
     # Oppgave 5.3: Start
     #######################################################################
+    def PI_objekt_fn(nn_params):
+        l_data = data_loss(nn_params, sensor_data, cfg)
+        l_ic = ic_loss(nn_params, ic_epoch, cfg)
+        l_ph = physics_loss(pinn_params, sensor_data[:-1], cfg)
+        l_bc = bc_loss(pinn_params, ic_epoch, cfg)
+        
+        total = (cfg.lambda_data * l_data + cfg.lambda_ic * l_ic + 
+                 cfg.lambda_physics*l_ph + cfg.lambda_bc*l_bc)
+        return total, (l_data, l_ic)
+    PI_objekt_fn = jax.jit(PI_objekt_fn)
+
+    interior_epoch, key = sample_interior(key, cfg)
+    ic_epoch, key = sample_ic(key, cfg)
+    bc_epoch, key = sample_bc(key, cfg)
+
+    for _ in tqdm(range(cfg.num_epochs), desc="Training PINN"):
+        ic_epoch, key = sample_ic(key, cfg)
+        (total, (l_data, l_ic)), grads = jax.value_and_grad(PI_objekt_fn, has_aux=True)(nn_params)
+
+        nn_params, adam_state = adam_step(pinn_params, grads, adam_state, lr=cfg.learning_rate)
+
+        losses["total"].append(total)
+        losses["data"].append(l_data)
+        losses["ic"].append(l_ic)
+
 
     # Update the nn_params and losses dictionary
 
