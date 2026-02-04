@@ -93,10 +93,23 @@ def physics_loss(pinn_params, interior_points, cfg: Config):
 
     #######################################################################
     # Oppgave 5.2: Start
-    #######################################################################
+    #######################################################################)
+
+    N_pred = forward(pinn_params, x ,y ,t ,cfg )
+
+
+
+    f_t = grad(forward, 3)(pinn_params["nn"], x, y, t, cfg ) 
+    f_xx = grad(grad(forward, 1), 1)(pinn_params["nn"], x, y, t, cfg )
+    f_yy = grad(grad(forward, 2), 2)(pinn_params["nn"], x, y, t, cfg )
+    f_tt = grad(grad(forward, 3), 3)(pinn_params["nn"], x, y, t, cfg )
+
+    physics_loss_val = (jnp.mean((f_t- jnp.exp(pinn_params["log_alpha"])*(f_xx + f_yy + f_tt) 
+                                 - pinn_params["log_power"] *cfg.is_source(x, y)  ) ) )
+
 
     # Placeholder initialization — replace this with your implementation
-    physics_loss_val = None
+    #physics_loss_val = None
 
     #######################################################################
     # Oppgave 5.2: Slutt
