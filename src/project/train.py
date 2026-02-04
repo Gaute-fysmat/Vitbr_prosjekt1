@@ -88,7 +88,8 @@ def train_pinn(sensor_data: jnp.ndarray, cfg: Config) -> tuple[dict, dict]:
     #######################################################################
     # Oppgave 5.3: Start
     #######################################################################
-    def PI_objekt_fn(nn_params):
+    def PI_objekt_fn(pinn_params):
+        nn_params=pinn_params["nn"]
         l_data = data_loss(nn_params, sensor_data, cfg)
         l_ic = ic_loss(nn_params, ic_epoch, cfg)
 
@@ -103,7 +104,6 @@ def train_pinn(sensor_data: jnp.ndarray, cfg: Config) -> tuple[dict, dict]:
     for _ in tqdm(range(cfg.num_epochs), desc="Training PINN"):
         ic_epoch, key = sample_ic(key, cfg)
         interior_epoch, key = sample_interior(key, cfg)
-        ic_epoch, key = sample_ic(key, cfg)
         bc_epoch, key = sample_bc(key, cfg)
 
 
