@@ -97,36 +97,14 @@ def physics_loss(pinn_params, interior_points, cfg: Config):
 
     def _pde_residual_scalar(pinn_params, x, y, t, cfg: Config):
 
-        """Compute Robin BC residual: -k * grad(T) . n - h * (T - T_out) = 0.
-
-        Args:
-            pinn_params: Full pinn_params dict with 'nn', 'log_k', 'log_h' keys
-            x, y, t: Point on boundary (scalars)
-            nx, ny: Outward normal components (scalars)
-            cfg: Configuration
-
-        Returns:
-            BC residual (scalar)
-        """
-
         def T_fn(x, y, t):
             return forward(pinn_params["nn"], x, y, t, cfg)
 
-        # Compute spatial gradients using automatic differentiation
-        T_x = grad(T_fn, 0)(x, y, t)
-        T_y = grad(T_fn, 1)(x, y, t)
-        T_t = grad(T_fn, 3)( x, y, t) 
-        T_xx = grad(grad(T_fn, 1), 1)(x, y, t)
-        T_yy = grad(grad(T_fn, 2), 2)(x, y, t)
+        T_t = grad(T_fn, 2)( x, y, t) 
+        T_xx = grad(grad(T_fn, 0), 0)(x, y, t)
+        T_yy = grad(grad(T_fn, 1), 1)(x, y, t)
 
-        # Temperature at boundary point
-        T = T_fn(x, y, t)
-
-        # Robin BC: -k * (grad T . n) = h * (T - T_out)
-        #grad_T_dot_n = T_x * nx + T_y * ny
-        #k = jnp.exp(pinn_params["log_k"])
-        #h = jnp.exp(pinn_params["log_h"])
-        q = jnp.exp(pinn_params["log_power"] *cfg.is_source(x, y))
+        q = jnp.exp(pinn_params["log_power"]) *cfg.is_source(x, y)
         residual = T_t - jnp.exp(pinn_params["log_alpha"])*(T_xx+T_yy) - q 
 
         return residual
@@ -136,6 +114,12 @@ def physics_loss(pinn_params, interior_points, cfg: Config):
             pinn_params, xi, yi, ti, cfg))(x, y, t)
 
     physics_loss_val = jnp.mean(residuals**2)
+    
+    #######################################################################
+    # Oppgave 5.2: Slutt
+    #######################################################################
+
+
 
     return physics_loss_val
 
@@ -165,10 +149,6 @@ def physics_loss(pinn_params, interior_points, cfg: Config):
 
     # Placeholder initialization — replace this with your implementation
     #physics_loss_val = None
-
-    #######################################################################
-    # Oppgave 5.2: Slutt
-    #######################################################################
 
 
 
