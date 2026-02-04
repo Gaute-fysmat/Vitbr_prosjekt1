@@ -114,12 +114,10 @@ def physics_loss(pinn_params, interior_points, cfg: Config):
             pinn_params, xi, yi, ti, cfg))(x, y, t)
 
     physics_loss_val = jnp.mean(residuals**2)
-    
+
     #######################################################################
     # Oppgave 5.2: Slutt
     #######################################################################
-
-
 
     return physics_loss_val
 
