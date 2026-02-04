@@ -91,27 +91,31 @@ def train_pinn(sensor_data: jnp.ndarray, cfg: Config) -> tuple[dict, dict]:
     def PI_objekt_fn(nn_params):
         l_data = data_loss(nn_params, sensor_data, cfg)
         l_ic = ic_loss(nn_params, ic_epoch, cfg)
-        l_ph = physics_loss(pinn_params, sensor_data[:-1], cfg)
-        l_bc = bc_loss(pinn_params, ic_epoch, cfg)
-        
+
+        l_ph = physics_loss(pinn_params, interior_epoch, cfg)
+        l_bc = bc_loss(pinn_params, bc_epoch, cfg)
         total = (cfg.lambda_data * l_data + cfg.lambda_ic * l_ic + 
                  cfg.lambda_physics*l_ph + cfg.lambda_bc*l_bc)
-        return total, (l_data, l_ic)
+        return total, (l_data, l_ic, l_ph, l_bc)
     PI_objekt_fn = jax.jit(PI_objekt_fn)
 
-    interior_epoch, key = sample_interior(key, cfg)
-    ic_epoch, key = sample_ic(key, cfg)
-    bc_epoch, key = sample_bc(key, cfg)
 
     for _ in tqdm(range(cfg.num_epochs), desc="Training PINN"):
         ic_epoch, key = sample_ic(key, cfg)
-        (total, (l_data, l_ic)), grads = jax.value_and_grad(PI_objekt_fn, has_aux=True)(nn_params)
+        interior_epoch, key = sample_interior(key, cfg)
+        ic_epoch, key = sample_ic(key, cfg)
+        bc_epoch, key = sample_bc(key, cfg)
 
-        nn_params, adam_state = adam_step(pinn_params, grads, adam_state, lr=cfg.learning_rate)
+
+        (total, (l_data, l_ic, l_ph, l_bc)), grads = jax.value_and_grad(PI_objekt_fn, has_aux=True)(pinn_params)
+
+        pinn_params, opt_state = adam_step(pinn_params, grads, opt_state, lr=cfg.learning_rate)
 
         losses["total"].append(total)
         losses["data"].append(l_data)
         losses["ic"].append(l_ic)
+        losses["physics"].append(l_ph)
+        losses["bc"].append(l_bc)
 
 
     # Update the nn_params and losses dictionary
