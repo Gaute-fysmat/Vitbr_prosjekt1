@@ -88,7 +88,6 @@ def train_pinn(sensor_data: jnp.ndarray, cfg: Config) -> tuple[dict, dict]:
     #######################################################################
     # Oppgave 5.3: Start
     #######################################################################
-    #pinn_params = pinn_params["nn"]
 
     def PI_objekt_fn(pinn_params):
         l_data = data_loss(pinn_params["nn"], sensor_data, cfg)
